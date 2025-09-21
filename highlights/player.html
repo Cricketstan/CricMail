@@ -38,7 +38,23 @@
       font-size: 16px; color: #ddd;
       text-shadow: 0 2px 6px rgba(0,0,0,0.7);
     }
+/* Remove blue highlight on tap/click for all elements */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 
+/* Allow text selection for specific elements where it might be needed */
+input, textarea, [contenteditable] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
     .action-bar {
       display: flex; justify-content: space-around; align-items: center;
       padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.2);
