@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CRICMAIL</title>
+    <title>CricMail</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="referrer" content="no-referrer" />
     <link rel="icon" href="https://fancode.com/favicon.ico" type="image/x-icon">
@@ -78,7 +77,6 @@
             background-color: #38bdf8;
         }
         
-        /* --- NEW: Telegram Popup Styles --- */
         .popup-overlay {
             position: fixed;
             inset: 0;
@@ -216,32 +214,27 @@
                 </div>`;
         }
         
-        // NEW: Function to handle the popup logic
         function handlePopup() {
             const popup = document.getElementById('telegram-popup');
             const closeBtn = document.getElementById('popup-close-btn');
             const joinBtn = document.getElementById('popup-join-btn');
             const POPUP_KEY = 'playerTelegramPopupDismissed';
 
-            // Don't show if already dismissed
             if (localStorage.getItem(POPUP_KEY)) {
                 return;
             }
 
-            // Show after a delay (e.g., 5 seconds)
             setTimeout(() => {
                 popup.classList.add('show');
             }, 5000);
 
             function dismissPopup() {
                 popup.classList.remove('show');
-                // Set flag in localStorage so it doesn't show again
                 localStorage.setItem(POPUP_KEY, 'true');
             }
 
             closeBtn.addEventListener('click', dismissPopup);
             joinBtn.addEventListener('click', () => {
-                // Dismiss after a short delay to allow the new tab to open
                 setTimeout(dismissPopup, 300);
             });
         }
@@ -291,18 +284,39 @@
                     const hls = new Hls();
                     hls.loadSource(streamUrl);
                     hls.attachMedia(playerElement);
+                    
+                    hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                        const availableQualities = hls.levels.map((l) => l.height);
+                        
+                        // Filter out duplicates and sort descending
+                        const uniqueQualities = [...new Set(availableQualities)].sort((a, b) => b - a);
+
+                        const player = new Plyr(playerElement, {
+                            autoplay: true,
+                            quality: {
+                                default: uniqueQualities[0] || 720, // Default to highest or 720p
+                                options: uniqueQualities,
+                                forced: true, // Always show the quality menu
+                                onChange: (newQuality) => {
+                                    // Find the level index corresponding to the new quality
+                                    // Set to -1 for auto quality
+                                    hls.currentLevel = hls.levels.findIndex((level) => level.height === newQuality);
+                                },
+                            },
+                        });
+
+                        player.play().catch(e => console.warn("Autoplay was blocked.", e));
+                    });
                 } else {
                     playerElement.src = streamUrl;
+                    const player = new Plyr(playerElement, { autoplay: true });
+                    player.play().catch(e => console.warn("Autoplay was blocked.", e));
                 }
-                
-                const player = new Plyr(playerElement, { autoplay: true });
-                player.play().catch(e => console.warn("Autoplay was blocked.", e));
             } catch (error) {
                 console.error("Player initialization error:", error);
                 displayError("A player error occurred. Please try another stream.");
             }
             
-            // Initialize the popup logic
             handlePopup();
         });
     </script>
